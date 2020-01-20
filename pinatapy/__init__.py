@@ -19,22 +19,21 @@ class PinataPy:
                 "pinata_secret_api_key": self.SECRET_KEY
                 }
 
-    def __error(self, code: int) -> dict:
+    def __error(self, res) -> dict:
         return {
-                "message": "Response status {}".format(code)
+                "status": res.status_code,
+                "reason": res.reason,
+                "text": res.text
                 }
 
     def test_authentication(self) -> dict:
         url_suffix = "data/testAuthentication"
-        res = requests.get(__endpoint + url_suffix, headers=self.headers)
+        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
         if res.status_code == 200:
             return res.json()
 
-        r = {
-                "message": "Response status {}".format(res.status_code)
-                }
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def add_hash_to_pin_queue(self, hash_to_pin, options=None):
         url_suffix = "pinning/addHashToPinQueue"
@@ -43,27 +42,29 @@ class PinataPy:
         body = {
                 "hashToPin": hash_to_pin
                 }
-        res = requests.post(__endpoint + url_suffix, data=body, headers=h)
+
+        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
 
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def pin_file_to_ipfs(self, path_to_file, options=None):
         url_suffix = "pinning/pinFileToIPFS"
         h = self.headers
-        h["Content-Type"] = "multipart/form-data"
+        h["Content-Type"] = "multipart/form-data; boundary=X-PINATAPY-VOURHEY"
 
         body = {
-                "file": open(path_to_file, "rb").read()
+                "file": open(path_to_file, "rb")
                 }
-        res = requests.post(__endpoint + url_suffix, data=body, headers=h)
+        print(body)
+        res = requests.post(self.__endpoint + url_suffix, files=body, headers=h)
 
         if  res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def pin_hash_to_ipfs(self, hash_to_pin, options=None):
         url_suffix = "pinning/pinHashToIPFS"
@@ -73,34 +74,37 @@ class PinataPy:
         body = {
                 "hashToPin": hash_to_pin
                 }
-        res = requests.post(__endpoint + url_suffix, data=body, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, data=body, headers=h)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def pin_jobs(self, options=None):
         url_suffix = "pinning/pinJobs"
 
-        res = requests.get(__endpoint + url_suffix, headers=self.headers)
+        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def pin_json_to_ipfs(self, json_to_pin, options=None):
         url_suffix = "pinning/pinJSONToIPFS"
         h = self.headers
         h["Content-Type"] = "application/json"
 
-        res = requests.post(__endpoint + url_suffix, json=json_to_pin, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, json=json_to_pin, headers=h)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def remove_pin_from_ipfs(self, hash_to_remove, options=None):
         url_suffix = "pinning/removePinFromIPFS"
@@ -111,30 +115,33 @@ class PinataPy:
                 "ipfs_pin_hash": hash_to_remove
                 }
 
-        res = requests.post(__endpoint + url_suffix, data=body, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, data=body, headers=h)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def pin_list(self, options=None):
         url_suffix = "data/pinList"
 
-        res = requests.get(__endpoint + url_suffix, headers=self.headers)
+        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
     def user_pinned_data_total(self):
         url_suffix = "data/userPinnedDataTotal"
 
-        res = requests.get(__endpoint + url_suffix, headers=self.headers)
+        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
+        return res.json()
         if res.status_code == 200:
             return res.json()
 
-        return self.__error(r.status_code)
+        return self.__error(res)
 
