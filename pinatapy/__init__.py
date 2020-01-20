@@ -52,14 +52,11 @@ class PinataPy:
 
     def pin_file_to_ipfs(self, path_to_file, options=None):
         url_suffix = "pinning/pinFileToIPFS"
-        h = self.headers
-        h["Content-Type"] = "multipart/form-data; boundary=X-PINATAPY-VOURHEY"
 
-        body = {
+        files = {
                 "file": open(path_to_file, "rb")
                 }
-        print(body)
-        res = requests.post(self.__endpoint + url_suffix, files=body, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, files=files, headers=self.headers)
 
         if  res.status_code == 200:
             return res.json()
@@ -74,9 +71,8 @@ class PinataPy:
         body = {
                 "hashToPin": hash_to_pin
                 }
-        res = requests.post(self.__endpoint + url_suffix, data=body, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
 
-        return res.json()
         if res.status_code == 200:
             return res.json()
 
@@ -87,7 +83,6 @@ class PinataPy:
 
         res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
-        return res.json()
         if res.status_code == 200:
             return res.json()
 
@@ -100,7 +95,6 @@ class PinataPy:
 
         res = requests.post(self.__endpoint + url_suffix, json=json_to_pin, headers=h)
 
-        return res.json()
         if res.status_code == 200:
             return res.json()
 
@@ -115,11 +109,10 @@ class PinataPy:
                 "ipfs_pin_hash": hash_to_remove
                 }
 
-        res = requests.post(self.__endpoint + url_suffix, data=body, headers=h)
+        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
 
-        return res.json()
         if res.status_code == 200:
-            return res.json()
+            return {"message": "Removed"}
 
         return self.__error(res)
 
@@ -128,7 +121,6 @@ class PinataPy:
 
         res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
-        return res.json()
         if res.status_code == 200:
             return res.json()
 
@@ -139,7 +131,6 @@ class PinataPy:
 
         res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
 
-        return res.json()
         if res.status_code == 200:
             return res.json()
 
