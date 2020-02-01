@@ -1,0 +1,3 @@
+# addHashToPinQueue
+
+This endpoint allows you to add a hash to Pinata for asynchronous pinning. Content added through this endpoint is pinned in the background and will show up in your pinned items once the content has been found / pinned. In for this operation to succeed, the content for the hash you provide must already be pinned by another node on the IFPS network.

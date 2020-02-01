@@ -1,0 +1,5 @@
+# pinFileToIPFS
+
+This endpoint allows the sender to add and pin any file, or directory, to Pinata's IPFS nodes.
+
+ANY FILE? Yeah! Any file. Here at Pinata, you can even host the plans for that awesome spaceship you're building.
