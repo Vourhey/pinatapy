@@ -75,6 +75,8 @@ class PinataPy:
 
         return self.__error(res)
 
+    # TODO
+    # path_to_file may be a path to a directory. In this case pin_file_to_ipfs must pin files recursively
     def pin_file_to_ipfs(self, path_to_file, options=None):
         url_suffix = "pinning/pinFileToIPFS"
 

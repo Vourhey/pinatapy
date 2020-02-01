@@ -19,6 +19,20 @@ class TestPinataPy(unittest.TestCase):
 
         self.assertEqual(response, expected)
 
+    def test_remove_pin_from_ipfs(self):
+        pass
+
+    def test_pin_list(self):
+        options = {
+                "status": "pinned"
+                }
+        res = self.pinata.pin_list(options)
+        self.assertIn("rows", res)
+
+    def test_user_pinned_data_total(self):
+        res = self.pinata.user_pinned_data_total()
+        self.assertIn("pin_count", res)
+
 if __name__ == "__main__":
     unittest.main()
 
