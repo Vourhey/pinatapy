@@ -79,7 +79,7 @@ class PinataPy:
     # path_to_file may be a path to a directory. In this case pin_file_to_ipfs must pin files recursively
     def pin_file_to_ipfs(self, path_to_file, options=None):
         url_suffix = "pinning/pinFileToIPFS"
-        if type(path_to_file) == 'str': path_to_file = Path(path_to_file)
+        if type(path_to_file) is str: path_to_file = Path(path_to_file)
         if path_to_file.is_dir():
             files = [("file",(str(file), open(file, "rb"))) for file in path_to_file.glob('**/*') if not file.is_dir()]
         else:
