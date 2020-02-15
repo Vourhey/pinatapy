@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pinatapy-vourhey",
-    version="0.1.2",
+    version="0.1.3",
     author="Vadim Manaenko",
     author_email="vadim.razorq@gmail.com",
     description="Non-official Pinata.cloud library",

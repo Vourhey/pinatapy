@@ -12,7 +12,7 @@ But at the moment use it as it is. In the end it's just a hundred of lines =)
 ## Installation
 
 ```
-pip install -i https://test.pypi.org/simple/ pinatapy-vourhey
+pip install pinatapy-vourhey
 ```
 
 ## Usage
