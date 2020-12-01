@@ -81,7 +81,7 @@ class PinataPy:
         url_suffix = "pinning/pinFileToIPFS"
         if type(path_to_file) is str: path_to_file = Path(path_to_file)
         if path_to_file.is_dir():
-            files = [("file",(str(file), open(file, "rb"))) for file in path_to_file.glob('**/*') if not file.is_dir()]
+            files = [("file",(file.as_posix(), open(file, "rb"))) for file in path_to_file.glob('**/*') if not file.is_dir()]
         else:
             files = {
                     "file": open(path_to_file, "rb")
