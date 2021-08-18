@@ -7,6 +7,7 @@ Non-official Python library for Pinata.cloud
 import requests
 from pathlib import Path
 
+
 class PinataPy:
     __endpoint = "https://api.pinata.cloud/"
 
@@ -14,17 +15,10 @@ class PinataPy:
         self.API_KEY = pinata_api_key
         self.SECRET_KEY = pinata_secret_api_key
 
-        self.headers = {
-                "pinata_api_key": self.API_KEY,
-                "pinata_secret_api_key": self.SECRET_KEY
-                }
+        self.headers = {"pinata_api_key": self.API_KEY, "pinata_secret_api_key": self.SECRET_KEY}
 
     def __error(self, res) -> dict:
-        return {
-                "status": res.status_code,
-                "reason": res.reason,
-                "text": res.text
-                }
+        return {"status": res.status_code, "reason": res.reason, "text": res.text}
 
     def test_authentication(self) -> dict:
         url_suffix = "data/testAuthentication"
@@ -54,13 +48,12 @@ class PinataPy:
         }
     }
     """
+
     def add_hash_to_pin_queue(self, hash_to_pin, options=None):
         url_suffix = "pinning/addHashToPinQueue"
         h = self.headers
         h["Content-Type"] = "application/json"
-        body = {
-                "hashToPin": hash_to_pin
-                }
+        body = {"hashToPin": hash_to_pin}
 
         if options is not None:
             if "host_nodes" in options:
@@ -79,13 +72,16 @@ class PinataPy:
     # path_to_file may be a path to a directory. In this case pin_file_to_ipfs must pin files recursively
     def pin_file_to_ipfs(self, path_to_file, options=None):
         url_suffix = "pinning/pinFileToIPFS"
-        if type(path_to_file) is str: path_to_file = Path(path_to_file)
+        if type(path_to_file) is str:
+            path_to_file = Path(path_to_file)
         if path_to_file.is_dir():
-            files = [("file",(file.as_posix(), open(file, "rb"))) for file in path_to_file.glob('**/*') if not file.is_dir()]
+            files = [
+                ("file", (file.as_posix(), open(file, "rb")))
+                for file in path_to_file.glob("**/*")
+                if not file.is_dir()
+            ]
         else:
-            files = {
-                    "file": open(path_to_file, "rb")
-                    }
+            files = {"file": open(path_to_file, "rb")}
 
         if options is not None:
             if "pinataMetadata" in options:
@@ -95,7 +91,7 @@ class PinataPy:
 
         res = requests.post(self.__endpoint + url_suffix, files=files, headers=self.headers)
 
-        if  res.status_code == 200:
+        if res.status_code == 200:
             return res.json()
 
         return self.__error(res)
@@ -105,9 +101,7 @@ class PinataPy:
         h = self.headers
         h["Content-Type"] = "application/json"
 
-        body = {
-                "hashToPin": hash_to_pin
-                }
+        body = {"hashToPin": hash_to_pin}
 
         if options is not None:
             if "host_nodes" in options:
@@ -125,6 +119,7 @@ class PinataPy:
     """
     https://pinata.cloud/documentation#PinJobs
     """
+
     def pin_jobs(self, options=None):
         url_suffix = "pinning/pinJobs"
 
@@ -143,9 +138,7 @@ class PinataPy:
         h = self.headers
         h["Content-Type"] = "application/json"
 
-        body = {
-                "pinataContent": json_to_pin
-                }
+        body = {"pinataContent": json_to_pin}
 
         if options is not None:
             if "pinataMetadata" in options:
@@ -165,9 +158,7 @@ class PinataPy:
         h = self.headers
         h["Content-Type"] = "application/json"
 
-        body = {
-                "ipfs_pin_hash": hash_to_remove
-                }
+        body = {"ipfs_pin_hash": hash_to_remove}
 
         res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
 
@@ -179,6 +170,7 @@ class PinataPy:
     """
     https://pinata.cloud/documentation#PinList
     """
+
     def pin_list(self, options=None):
         url_suffix = "data/pinList"
 
@@ -201,4 +193,3 @@ class PinataPy:
             return res.json()
 
         return self.__error(res)
-
