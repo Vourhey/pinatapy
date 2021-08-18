@@ -5,26 +5,23 @@ from pinatapy import PinataPy
 
 
 class TestPinataPy(unittest.TestCase):
-    def setUp(self):
-        self.PINATA_API_KEY = os.environ.get("PINATA_API_KEY")
-        self.PINATA_SECRET_API_KEY = os.environ.get("PINATA_SECRET_API_KEY")
-        self.pinata = PinataPy(self.PINATA_API_KEY, self.PINATA_SECRET_API_KEY)
+    def setUp(self) -> None:
+        api_key = os.environ.get("PINATA_API_KEY")
+        secret_key = os.environ.get("PINATA_SECRET_API_KEY")
+        if api_key and secret_key:
+            self.pinata = PinataPy(api_key, secret_key)
+        else:
+            raise ValueError("No API keys in environment variables")
 
-    def test_test_authentication(self):
-        response = self.pinata.test_authentication()
-        expected = {"message": "Congratulations! You are communicating with the Pinata API!"}
-
-        self.assertEqual(response, expected)
-
-    def test_remove_pin_from_ipfs(self):
+    def test_remove_pin_from_ipfs(self) -> None:
         pass
 
-    def test_pin_list(self):
+    def test_pin_list(self) -> None:
         options = {"status": "pinned"}
         res = self.pinata.pin_list(options)
         self.assertIn("rows", res)
 
-    def test_user_pinned_data_total(self):
+    def test_user_pinned_data_total(self) -> None:
         res = self.pinata.user_pinned_data_total()
         self.assertIn("pin_count", res)
 

@@ -1,85 +1,57 @@
 # -*- coding: utf-8 -*-
 
-"""
-Non-official Python library for Pinata.cloud
-"""
+"""Non-official Python library for Pinata.cloud"""
+
+import os
+import typing as tp
 
 import requests
-from pathlib import Path
+
+# Custom tpe hints
+ResponsePayload = tp.Dict[str, tp.Any]
+OptionsDict = tp.Dict[str, tp.Any]
+Headers = tp.Dict[str, str]
+
+# global constants
+API_ENDPOINT: str = "https://api.pinata.cloud/"
 
 
 class PinataPy:
-    __endpoint = "https://api.pinata.cloud/"
+    """A pinata api client session object"""
 
-    def __init__(self, pinata_api_key, pinata_secret_api_key):
-        self.API_KEY = pinata_api_key
-        self.SECRET_KEY = pinata_secret_api_key
-
-        self.headers = {"pinata_api_key": self.API_KEY, "pinata_secret_api_key": self.SECRET_KEY}
-
-    def __error(self, res) -> dict:
-        return {"status": res.status_code, "reason": res.reason, "text": res.text}
-
-    def test_authentication(self) -> dict:
-        url_suffix = "data/testAuthentication"
-        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
-
-    """
-    Options (optional):
-    {
-        "host_nodes": [
-            "/ip4/host_node_1_external_IP/tcp/4001/ipfs/host_node_1_peer_id",
-            "/ip4/host_node_2_external_IP/tcp/4001/ipfs/host_node_2_peer_id",
-            .
-            .
-            .
-        ],
-        "pinataMetadata": {
-            "name": (optional) - This is a custom name you can have for referencing your pinned content. This will be displayed in the Pin explorer "name" column if provided,
-            "keyvalues": {
-                "customKey": "customValue",
-                "customKey2": "customValue2"
-            }
+    def __init__(self, pinata_api_key: str, pinata_secret_api_key: str) -> None:
+        self._auth_headers: Headers = {
+            "pinata_api_key": pinata_api_key,
+            "pinata_secret_api_key": pinata_secret_api_key,
         }
-    }
-    """
 
-    def add_hash_to_pin_queue(self, hash_to_pin, options=None):
-        url_suffix = "pinning/addHashToPinQueue"
-        h = self.headers
-        h["Content-Type"] = "application/json"
-        body = {"hashToPin": hash_to_pin}
+    @staticmethod
+    def _error(response: requests.Response) -> ResponsePayload:
+        """Construct dict from response if an error has occurred"""
+        return {"status": response.status_code, "reason": response.reason, "text": response.text}
 
-        if options is not None:
-            if "host_nodes" in options:
-                body["host_nodes"] = options["host_nodes"]
-            if "pinataMetadata" in options:
-                body["pinataMetadata"] = options["pinataMetadata"]
+    def pin_file_to_ipfs(self, path_to_file: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """
+        Pin any file, or directory, to Pinata's IPFS nodes
 
-        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
+        More: https://docs.pinata.cloud/api-pinning/pin-file
+        """
+        url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
+        headers: Headers = self._auth_headers
 
-        if res.status_code == 200:
-            return res.json()
+        def get_all_files(directory: str) -> tp.List[str]:
+            """get a list of absolute paths to every file located in the directory"""
+            paths: tp.List[str] = []
+            for root, dirs, files_ in os.walk(os.path.abspath(directory)):
+                for file in files_:
+                    paths.append(os.path.join(root, file))
+            return paths
 
-        return self.__error(res)
+        files: tp.Dict[str, tp.Any]
 
-    # TODO
-    # path_to_file may be a path to a directory. In this case pin_file_to_ipfs must pin files recursively
-    def pin_file_to_ipfs(self, path_to_file, options=None):
-        url_suffix = "pinning/pinFileToIPFS"
-        if type(path_to_file) is str:
-            path_to_file = Path(path_to_file)
-        if path_to_file.is_dir():
-            files = [
-                ("file", (file.as_posix(), open(file, "rb")))
-                for file in path_to_file.glob("**/*")
-                if not file.is_dir()
-            ]
+        if os.path.isdir(path_to_file):
+            all_files: tp.List[str] = get_all_files(path_to_file)
+            files = {"file": [(file, open(file, "rb")) for file in all_files]}
         else:
             files = {"file": open(path_to_file, "rb")}
 
@@ -87,109 +59,77 @@ class PinataPy:
             if "pinataMetadata" in options:
                 files["pinataMetadata"] = options["pinataMetadata"]
             if "pinataOptions" in options:
-                files["pinataOptions"] = options["pinataOptions"]
+                headers["pinataOptions"] = options["pinataOptions"]
+        response: requests.Response = requests.post(url=url, files=files, headers=headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
 
-        res = requests.post(self.__endpoint + url_suffix, files=files, headers=self.headers)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
-
-    def pin_hash_to_ipfs(self, hash_to_pin, options=None):
-        url_suffix = "pinning/pinHashToIPFS"
-        h = self.headers
-        h["Content-Type"] = "application/json"
-
+    def pin_hash_to_ipfs(self, hash_to_pin: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """WARNING: This Pinata API method is deprecated. Use 'pin_hash_to_ipfs' instead"""
+        url: str = API_ENDPOINT + "pinning/pinHashToIPFS"
+        headers: Headers = self._auth_headers
+        headers["Content-Type"] = "application/json"
         body = {"hashToPin": hash_to_pin}
-
         if options is not None:
             if "host_nodes" in options:
                 body["host_nodes"] = options["host_nodes"]
             if "pinataMetadata" in options:
                 body["pinataMetadata"] = options["pinataMetadata"]
+        response: requests.Response = requests.post(url=url, json=body, headers=headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
 
-        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
+    def pin_to_pinata_using_ipfs_hash(self, ipfs_hash: str, filename: str) -> ResponsePayload:
+        """
+        Pin file to Pinata using its IPFS hash
 
-        if res.status_code == 200:
-            return res.json()
+        https://docs.pinata.cloud/api-pinning/pin-by-hash
+        """
+        payload: OptionsDict = {"pinataMetadata": {"name": filename}, "hashToPin": ipfs_hash}
+        url: str = API_ENDPOINT + "/pinning/pinByHash"
+        response: requests.Response = requests.post(url=url, json=payload, headers=self._auth_headers)
+        return self._error(response) if not response.ok else response.json()  # type: ignore
 
-        return self.__error(res)
+    def pin_jobs(self, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """
+        Retrieves a list of all the pins that are currently in the pin queue for your user.
 
-    """
-    https://pinata.cloud/documentation#PinJobs
-    """
+        More: https://docs.pinata.cloud/api-pinning/pin-jobs
+        """
+        url: str = API_ENDPOINT + "pinning/pinJobs"
+        payload: OptionsDict = options if options else {}
+        response: requests.Response = requests.get(url=url, params=payload, headers=self._auth_headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
 
-    def pin_jobs(self, options=None):
-        url_suffix = "pinning/pinJobs"
-
-        payload = {}
-        if options is not None:
-            payload = options
-        res = requests.get(self.__endpoint + url_suffix, params=payload, headers=self.headers)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
-
-    def pin_json_to_ipfs(self, json_to_pin, options=None):
-        url_suffix = "pinning/pinJSONToIPFS"
-        h = self.headers
-        h["Content-Type"] = "application/json"
-
-        body = {"pinataContent": json_to_pin}
-
+    def pin_json_to_ipfs(self, json_to_pin: tp.Any, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """pin provided JSON"""
+        url: str = API_ENDPOINT + "pinning/pinJSONToIPFS"
+        headers: Headers = self._auth_headers
+        headers["Content-Type"] = "application/json"
+        payload: ResponsePayload = {"pinataContent": json_to_pin}
         if options is not None:
             if "pinataMetadata" in options:
-                body["pinataMetadata"] = options["pinataMetadata"]
+                payload["pinataMetadata"] = options["pinataMetadata"]
             if "pinataOptions" in options:
-                body["pinataOptions"] = options["pinataOptions"]
+                payload["pinataOptions"] = options["pinataOptions"]
+        response: requests.Response = requests.post(url=url, json=payload, headers=headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
 
-        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
-
-    def remove_pin_from_ipfs(self, hash_to_remove, options=None):
-        url_suffix = "pinning/removePinFromIPFS"
-        h = self.headers
-        h["Content-Type"] = "application/json"
-
+    def remove_pin_from_ipfs(self, hash_to_remove: str) -> ResponsePayload:
+        """Removes specified hash pin"""
+        url: str = API_ENDPOINT + "pinning/removePinFromIPFS"
+        headers: Headers = self._auth_headers
+        headers["Content-Type"] = "application/json"
         body = {"ipfs_pin_hash": hash_to_remove}
+        response: requests.Response = requests.post(url=url, json=body, headers=headers)
+        return self._error(response) if not response.ok else {"message": "Removed"}
 
-        res = requests.post(self.__endpoint + url_suffix, json=body, headers=h)
+    def pin_list(self, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """https://pinata.cloud/documentation#PinList"""
+        url: str = API_ENDPOINT + "data/pinList"
+        payload: OptionsDict = options if options else {}
+        response: requests.Response = requests.get(url=url, params=payload, headers=self._auth_headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
 
-        if res.status_code == 200:
-            return {"message": "Removed"}
-
-        return self.__error(res)
-
-    """
-    https://pinata.cloud/documentation#PinList
-    """
-
-    def pin_list(self, options=None):
-        url_suffix = "data/pinList"
-
-        payload = {}
-        if options is not None:
-            payload = options
-        res = requests.get(self.__endpoint + url_suffix, params=payload, headers=self.headers)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
-
-    def user_pinned_data_total(self):
-        url_suffix = "data/userPinnedDataTotal"
-
-        res = requests.get(self.__endpoint + url_suffix, headers=self.headers)
-
-        if res.status_code == 200:
-            return res.json()
-
-        return self.__error(res)
+    def user_pinned_data_total(self) -> ResponsePayload:
+        url: str = API_ENDPOINT + "data/userPinnedDataTotal"
+        response: requests.Response = requests.get(url=url, headers=self._auth_headers)
+        return response.json() if response.ok else self._error(response)  # type: ignore
