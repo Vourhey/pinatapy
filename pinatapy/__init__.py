@@ -57,7 +57,7 @@ class PinataPy:
 
         if options is not None:
             if "pinataMetadata" in options:
-                files["pinataMetadata"] = options["pinataMetadata"]
+                headers["pinataMetadata"] = options["pinataMetadata"]
             if "pinataOptions" in options:
                 headers["pinataOptions"] = options["pinataOptions"]
         response: requests.Response = requests.post(url=url, files=files, headers=headers)
