@@ -36,7 +36,7 @@ class PinataPy:
 
         More: https://docs.pinata.cloud/api-pinning/pin-file
         """
-        url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
+        url: str = API_ENDPOINT + "pinning/addHashToPinQueue"
         headers: Headers = self._auth_headers
 
         def get_all_files(directory: str) -> tp.List[str]:
@@ -65,7 +65,7 @@ class PinataPy:
 
     def pin_hash_to_ipfs(self, hash_to_pin: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
         """WARNING: This Pinata API method is deprecated. Use 'pin_hash_to_ipfs' instead"""
-        url: str = API_ENDPOINT + "pinning/pinHashToIPFS"
+        url: str = API_ENDPOINT + "pinning/addHashToPinQueue"
         headers: Headers = self._auth_headers
         headers["Content-Type"] = "application/json"
         body = {"hashToPin": hash_to_pin}
