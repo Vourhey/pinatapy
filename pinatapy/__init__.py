@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Non-official Python library for Pinata.cloud"""
 
 import os
