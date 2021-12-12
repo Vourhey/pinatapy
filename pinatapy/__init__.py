@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Non-official Python library for Pinata.cloud"""
 
 import os
@@ -36,7 +34,7 @@ class PinataPy:
 
         More: https://docs.pinata.cloud/api-pinning/pin-file
         """
-        url: str = API_ENDPOINT + "pinning/addHashToPinQueue"
+        url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
         headers: Headers = self._auth_headers
 
         def get_all_files(directory: str) -> tp.List[str]:
