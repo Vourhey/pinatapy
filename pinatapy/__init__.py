@@ -45,13 +45,13 @@ class PinataPy:
                     paths.append(os.path.join(root, file))
             return paths
 
-        files: tp.Dict[str, tp.Any]
+        files: tp.List[str, tp.Any]
 
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = {"file": [(file, open(file, "rb")) for file in all_files]}
+            files = [("file",(file, open(file, "rb"))) for file in all_files]
         else:
-            files = {"file": open(path_to_file, "rb")}
+            files = [("file", open(path_to_file, "rb"))]
 
         if options is not None:
             if "pinataMetadata" in options:
