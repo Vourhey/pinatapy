@@ -35,7 +35,7 @@ class PinataPy:
         More: https://docs.pinata.cloud/api-pinning/pin-file
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
-        headers: Headers = self._auth_headers
+        headers: Headers = { k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"] }
 
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
