@@ -28,7 +28,20 @@ class PinataPy:
         """Construct dict from response if an error has occurred"""
         return {"status": response.status_code, "reason": response.reason, "text": response.text}
 
-    def pin_file_to_ipfs(self, path_to_file: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+    @staticmethod
+    def _validate_destination_folder_name(path: str) -> str:
+        """Validates the IPFS destination folder name is valid"""
+        path = path.replace(" ", "")
+        if not path.endswith("/"):
+            path = path + "/"
+        return path
+    
+    def pin_file_to_ipfs(
+        self,
+        path_to_file: str,
+        ipfs_destination_path: str = "/",
+        options: tp.Optional[OptionsDict] = None,
+    ) -> ResponsePayload:
         """
         Pin any file, or directory, to Pinata's IPFS nodes
 
@@ -36,6 +49,11 @@ class PinataPy:
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
         headers: Headers = { k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"] }
+        dest_folder_name = (
+            ipfs_destination_path
+            if ipfs_destination_path == "/"
+            else self._validate_destination_folder_name(ipfs_destination_path)
+        )
 
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
@@ -49,9 +67,9 @@ class PinataPy:
 
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file",(file, open(file, "rb"))) for file in all_files]
+            files = [("file", (dest_folder_name + file.split("/")[-1], open(file, "rb"))) for file in all_files]
         else:
-            files = [("file", open(path_to_file, "rb"))]
+            files = [("file", (dest_folder_name + path_to_file.split("/")[-1], open(path_to_file, "rb")))]
 
         if options is not None:
             if "pinataMetadata" in options:
