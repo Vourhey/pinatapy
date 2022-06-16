@@ -153,12 +153,14 @@ class PinataPy:
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def remove_pin_from_ipfs(self, hash_to_remove: str) -> ResponsePayload:
-        """Removes specified hash pin"""
-        url: str = API_ENDPOINT + "pinning/removePinFromIPFS"
+        """ Removes specified hash pin
+
+        More: https://docs.pinata.cloud/pinata-api/pinning/remove-files-unpin
+        """
+        url: str = API_ENDPOINT + f"pinning/unpin/{hash_to_remove}"
         headers: Headers = self._auth_headers
         headers["Content-Type"] = "application/json"
-        body = {"ipfs_pin_hash": hash_to_remove}
-        response: requests.Response = requests.post(url=url, json=body, headers=headers)
+        response: requests.Response = requests.delete(url=url, data={}, headers=headers)
         return self._error(response) if not response.ok else {"message": "Removed"}
 
     def pin_list(self, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
