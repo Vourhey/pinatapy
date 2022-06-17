@@ -85,10 +85,10 @@ class PinataPy:
         # If path_to_file is a directory
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file", (dest_folder_name + file.split("/")[-1], open(file, "rb"))) for file in all_files]
+            files = [("file", (dest_folder_name + file.split("/")[-1], open(file, "rb"))) for file in all_files]  # type: ignore
         # If path_to_file is a single file
         else:
-            files = [("file", (dest_folder_name + path_to_file.split("/")[-1], open(path_to_file, "rb")))]
+            files = [("file", (dest_folder_name + path_to_file.split("/")[-1], open(path_to_file, "rb")))]  # type: ignore
 
         if options is not None:
             if "pinataMetadata" in options:
@@ -113,8 +113,7 @@ class PinataPy:
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def pin_to_pinata_using_ipfs_hash(self, ipfs_hash: str, filename: str) -> ResponsePayload:
-        """
-        Pin file to Pinata using its IPFS hash
+        """ Pin file to Pinata using its IPFS hash
 
         https://docs.pinata.cloud/pinata-api/pinning/pin-by-cid
         """
@@ -124,8 +123,7 @@ class PinataPy:
         return self._error(response) if not response.ok else response.json()  # type: ignore
 
     def pin_jobs(self, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
-        """
-        Retrieves a list of all the pins that are currently in the pin queue for your user.
+        """ Retrieves a list of all the pins that are currently in the pin queue for your user.
 
         More: https://docs.pinata.cloud/pinata-api/pinning/list-pin-by-cid-jobs
         """
@@ -135,8 +133,7 @@ class PinataPy:
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def pin_json_to_ipfs(self, json_to_pin: tp.Any, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
-        """
-        pin provided JSON
+        """ pin provided JSON
         
         More: https://docs.pinata.cloud/pinata-api/pinning/pin-json
         """
@@ -153,16 +150,26 @@ class PinataPy:
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def remove_pin_from_ipfs(self, hash_to_remove: str) -> ResponsePayload:
-        """Removes specified hash pin"""
-        url: str = API_ENDPOINT + "pinning/removePinFromIPFS"
+        """ Removes specified hash pin
+
+        More: https://docs.pinata.cloud/pinata-api/pinning/remove-files-unpin
+        """
+        url: str = API_ENDPOINT + f"pinning/unpin/{hash_to_remove}"
         headers: Headers = self._auth_headers
         headers["Content-Type"] = "application/json"
-        body = {"ipfs_pin_hash": hash_to_remove}
-        response: requests.Response = requests.post(url=url, json=body, headers=headers)
+        response: requests.Response = requests.delete(url=url, data={}, headers=headers)
         return self._error(response) if not response.ok else {"message": "Removed"}
 
     def pin_list(self, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
-        """https://pinata.cloud/documentation#PinList"""
+        """ Returns list of your IPFS files based on certain filters.
+
+        Ex: Filter by only 'pinned' files
+            options = ({"status": "pinned"})
+        Ex: Filter by 'pinned' files and files that contain a metadata 'name' of 'dogs-nfts'
+            options = ({"status": "pinned", "metadata[name]": "dogs-nfts"})
+        
+        More: https://docs.pinata.cloud/pinata-api/data/query-files
+        """
         url: str = API_ENDPOINT + "data/pinList"
         payload: OptionsDict = options if options else {}
         response: requests.Response = requests.get(url=url, params=payload, headers=self._auth_headers)
