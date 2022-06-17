@@ -28,14 +28,49 @@ class PinataPy:
         """Construct dict from response if an error has occurred"""
         return {"status": response.status_code, "reason": response.reason, "text": response.text}
 
-    def pin_file_to_ipfs(self, path_to_file: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+    @staticmethod
+    def _validate_destination_folder_name(path: str) -> str:
+        """
+        Validates the IPFS destination folder name is valid by removing 
+        blankspaces and adding '/' to the end of the path
+        """
+        path = path.replace(" ", "")
+        if not path.endswith("/"):
+            path = path + "/"
+        return path
+    
+    def pin_file_to_ipfs(
+        self,
+        path_to_file: str,
+        ipfs_destination_path: str = "/",
+        options: tp.Optional[OptionsDict] = None,
+    ) -> ResponsePayload:
         """
         Pin any file, or directory, to Pinata's IPFS nodes
 
-        More: https://docs.pinata.cloud/api-pinning/pin-file
+        Args:
+            path_to_file: local path of file/directory to upload to IPFS node
+            ipfs_destination_path: destination path of file(s) on the IPFS node. 
+                You can only set one destination path per call. 
+                Pathway can be viewed in the Pinata Cloud Pin Manager (https://app.pinata.cloud/pinmanager).
+                Ex: input => destination path
+                    '' => /
+                    'animal-nfts/' => /animal-nfts/
+                    'retro-nfts/animals' => /retro-nfts/animals/
+            options: optional parameters (pinataMetadata, pinataOptions)
+
+        Returns:
+            JSON response
+
+        More: https://docs.pinata.cloud/pinata-api/pinning/pin-file-or-directory
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
         headers: Headers = { k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"] }
+        dest_folder_name = (
+            ipfs_destination_path
+            if ipfs_destination_path == "/"
+            else self._validate_destination_folder_name(ipfs_destination_path)
+        )
 
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
@@ -47,11 +82,13 @@ class PinataPy:
 
         files: tp.List[str, tp.Any]
 
+        # If path_to_file is a directory
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file",(file, open(file, "rb"))) for file in all_files]
+            files = [("file", (dest_folder_name + file.split("/")[-1], open(file, "rb"))) for file in all_files]
+        # If path_to_file is a single file
         else:
-            files = [("file", open(path_to_file, "rb"))]
+            files = [("file", (dest_folder_name + path_to_file.split("/")[-1], open(path_to_file, "rb")))]
 
         if options is not None:
             if "pinataMetadata" in options:
@@ -79,7 +116,7 @@ class PinataPy:
         """
         Pin file to Pinata using its IPFS hash
 
-        https://docs.pinata.cloud/api-pinning/pin-by-hash
+        https://docs.pinata.cloud/pinata-api/pinning/pin-by-cid
         """
         payload: OptionsDict = {"pinataMetadata": {"name": filename}, "hashToPin": ipfs_hash}
         url: str = API_ENDPOINT + "/pinning/pinByHash"
@@ -90,7 +127,7 @@ class PinataPy:
         """
         Retrieves a list of all the pins that are currently in the pin queue for your user.
 
-        More: https://docs.pinata.cloud/api-pinning/pin-jobs
+        More: https://docs.pinata.cloud/pinata-api/pinning/list-pin-by-cid-jobs
         """
         url: str = API_ENDPOINT + "pinning/pinJobs"
         payload: OptionsDict = options if options else {}
@@ -98,7 +135,11 @@ class PinataPy:
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def pin_json_to_ipfs(self, json_to_pin: tp.Any, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
-        """pin provided JSON"""
+        """
+        pin provided JSON
+        
+        More: https://docs.pinata.cloud/pinata-api/pinning/pin-json
+        """
         url: str = API_ENDPOINT + "pinning/pinJSONToIPFS"
         headers: Headers = self._auth_headers
         headers["Content-Type"] = "application/json"
