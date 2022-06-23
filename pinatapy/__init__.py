@@ -38,12 +38,13 @@ class PinataPy:
         if not path.endswith("/"):
             path = path + "/"
         return path
-    
+
     def pin_file_to_ipfs(
-        self,
-        path_to_file: str,
-        ipfs_destination_path: str = "/",
-        options: tp.Optional[OptionsDict] = None,
+            self,
+            path_to_file: str,
+            ipfs_destination_path: str = "/",
+            save_absolute_paths: bool = True,
+            options: tp.Optional[OptionsDict] = None,
     ) -> ResponsePayload:
         """
         Pin any file, or directory, to Pinata's IPFS nodes
@@ -57,6 +58,10 @@ class PinataPy:
                     '' => /
                     'animal-nfts/' => /animal-nfts/
                     'retro-nfts/animals' => /retro-nfts/animals/
+            save_absolute_paths: parameter to control filepaths cutting.
+                Ex: input => destination path
+                    true: /dir1/dir2/dir3/filename => /dir1/dir2/dir3/filename
+                    false: /dir1/dir2/dir3/filename => filename
             options: optional parameters (pinataMetadata, pinataOptions)
 
         Returns:
@@ -65,7 +70,7 @@ class PinataPy:
         More: https://docs.pinata.cloud/pinata-api/pinning/pin-file-or-directory
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
-        headers: Headers = { k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"] }
+        headers: Headers = {k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"]}
         dest_folder_name = (
             ipfs_destination_path
             if ipfs_destination_path == "/"
@@ -80,15 +85,24 @@ class PinataPy:
                     paths.append(os.path.join(root, file))
             return paths
 
+        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool):
+            """transform filepath with dest_folder_name and absolute path saving rules"""
+            if save_absolute_paths:
+                return dest_folder_name + (filepath[:1].replace("/", "") + filepath[1:])  # remove first '/' if exists
+            else:
+                return dest_folder_name + filepath.split("/")[-1]
+
         files: tp.List[str, tp.Any]
 
         # If path_to_file is a directory
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file", (dest_folder_name + file.split("/")[-1], open(file, "rb"))) for file in all_files]  # type: ignore
+            files = [("file", (get_mutated_filepath(file, dest_folder_name, save_absolute_paths), open(file, "rb"))) for
+                     file in all_files]  # type: ignore
         # If path_to_file is a single file
         else:
-            files = [("file", (dest_folder_name + path_to_file.split("/")[-1], open(path_to_file, "rb")))]  # type: ignore
+            files = [("file", (get_mutated_filepath(path_to_file, dest_folder_name, save_absolute_paths),
+                               open(path_to_file, "rb")))]  # type: ignore
 
         if options is not None:
             if "pinataMetadata" in options:
