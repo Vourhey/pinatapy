@@ -71,6 +71,7 @@ class PinataPy:
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
         headers: Headers = {k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"]}
+        payload: OptionsDict = {}
         dest_folder_name = (
             ipfs_destination_path
             if ipfs_destination_path == "/"
@@ -106,10 +107,10 @@ class PinataPy:
 
         if options is not None:
             if "pinataMetadata" in options:
-                headers["pinataMetadata"] = options["pinataMetadata"]
+                payload["pinataMetadata"] = options["pinataMetadata"]
             if "pinataOptions" in options:
-                headers["pinataOptions"] = options["pinataOptions"]
-        response: requests.Response = requests.post(url=url, files=files, headers=headers)
+                payload["pinataOptions"] = options["pinataOptions"]
+        response: requests.Response = requests.post(url=url, files=files, headers=headers, data=payload)
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def pin_hash_to_ipfs(self, hash_to_pin: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
