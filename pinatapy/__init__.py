@@ -4,6 +4,7 @@ import os
 import typing as tp
 
 import requests
+import json
 
 # Custom tpe hints
 ResponsePayload = tp.Dict[str, tp.Any]
@@ -107,9 +108,12 @@ class PinataPy:
 
         if options is not None:
             if "pinataMetadata" in options:
-                payload["pinataMetadata"] = options["pinataMetadata"]
+                pinataMetadata = options["pinataMetadata"]
+                payload["pinataMetadata"] = pinataMetadata if type(pinataMetadata) == str else json.dumps(pinataMetadata)
             if "pinataOptions" in options:
-                payload["pinataOptions"] = options["pinataOptions"]
+                pinataOptions = options["pinataOptions"]
+                payload["pinataOptions"] = pinataOptions if type(pinataOptions) == str else json.dumps(pinataOptions)
+
         response: requests.Response = requests.post(url=url, files=files, headers=headers, data=payload)
         return response.json() if response.ok else self._error(response)  # type: ignore
 
