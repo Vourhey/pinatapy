@@ -39,6 +39,17 @@ class PinataPy:
         if not path.endswith("/"):
             path = path + "/"
         return path
+    
+    @staticmethod
+    def _validate_path_to_file(path: str) -> str:
+        """
+        Validates the path to file is valid by removing '/' at the end 
+        of the path.
+        """
+        path = path.replace(" ", "")
+        if path.endswith("/"):
+            path = path[:-1]
+        return path
 
     def pin_file_to_ipfs(
             self,
@@ -87,13 +98,16 @@ class PinataPy:
                     paths.append(os.path.join(root, file))
             return paths
 
-        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool):
+        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool, is_directory: bool = False):
             """transform filepath with dest_folder_name and absolute path saving rules"""
             if save_absolute_paths:
                 return dest_folder_name + (filepath[:1].replace("/", "") + filepath[1:])  # remove first '/' if exists
             else:
-                return dest_folder_name + filepath.split("/")[-1]
-
+                # can't pin directory into root and save directory's hierarchy
+                if is_directory and dest_folder_name == "/":
+                    dest_folder_name =  self._validate_path_to_file(path_to_file).split("/")[-1]
+                return dest_folder_name + filepath.split(dest_folder_name)[-1]
+        
         files: tp.List[str, tp.Any]
 
         # If path_to_file is a directory
