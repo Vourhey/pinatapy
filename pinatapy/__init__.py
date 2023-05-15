@@ -89,7 +89,7 @@ class PinataPy:
             if ipfs_destination_path == "/"
             else self._validate_destination_folder_name(ipfs_destination_path)
         )
-
+        
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
             paths: tp.List[str] = []
@@ -98,7 +98,7 @@ class PinataPy:
                     paths.append(os.path.join(root, file))
             return paths
 
-        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool, is_directory: bool = False):
+        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool, path_to_file: str, is_directory: bool = False):
             """transform filepath with dest_folder_name and absolute path saving rules"""
             if save_absolute_paths:
                 return dest_folder_name + (filepath[:1].replace("/", "") + filepath[1:])  # remove first '/' if exists
@@ -113,11 +113,11 @@ class PinataPy:
         # If path_to_file is a directory
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file", (get_mutated_filepath(file, dest_folder_name, save_absolute_paths), open(file, "rb"))) for
+            files = [("file", (get_mutated_filepath(file, dest_folder_name, save_absolute_paths, path_to_file, is_directory=True), open(file, "rb"))) for
                      file in all_files]  # type: ignore
         # If path_to_file is a single file
         else:
-            files = [("file", (get_mutated_filepath(path_to_file, dest_folder_name, save_absolute_paths),
+            files = [("file", (get_mutated_filepath(path_to_file, dest_folder_name, save_absolute_paths, path_to_file),
                                open(path_to_file, "rb")))]  # type: ignore
 
         if options is not None:
