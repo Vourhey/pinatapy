@@ -39,6 +39,17 @@ class PinataPy:
         if not path.endswith("/"):
             path = path + "/"
         return path
+    
+    @staticmethod
+    def _validate_path_to_file(path: str) -> str:
+        """
+        Validates the path to file is valid by removing '/' at the end 
+        of the path.
+        """
+        path = path.replace(" ", "")
+        if path.endswith("/"):
+            path = path[:-1]
+        return path
 
     def pin_file_to_ipfs(
             self,
@@ -78,7 +89,7 @@ class PinataPy:
             if ipfs_destination_path == "/"
             else self._validate_destination_folder_name(ipfs_destination_path)
         )
-
+        
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
             paths: tp.List[str] = []
@@ -87,23 +98,26 @@ class PinataPy:
                     paths.append(os.path.join(root, file))
             return paths
 
-        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool):
+        def get_mutated_filepath(filepath: str, dest_folder_name: str, save_absolute_paths: bool, path_to_file: str, is_directory: bool = False):
             """transform filepath with dest_folder_name and absolute path saving rules"""
             if save_absolute_paths:
                 return dest_folder_name + (filepath[:1].replace("/", "") + filepath[1:])  # remove first '/' if exists
             else:
-                return dest_folder_name + filepath.split("/")[-1]
-
+                # can't pin directory into root and save directory's hierarchy
+                if is_directory and dest_folder_name == "/":
+                    dest_folder_name =  self._validate_path_to_file(path_to_file).split("/")[-1]
+                return dest_folder_name + filepath.split(dest_folder_name)[-1]
+        
         files: tp.List[str, tp.Any]
 
         # If path_to_file is a directory
         if os.path.isdir(path_to_file):
             all_files: tp.List[str] = get_all_files(path_to_file)
-            files = [("file", (get_mutated_filepath(file, dest_folder_name, save_absolute_paths), open(file, "rb"))) for
+            files = [("file", (get_mutated_filepath(file, dest_folder_name, save_absolute_paths, path_to_file, is_directory=True), open(file, "rb"))) for
                      file in all_files]  # type: ignore
         # If path_to_file is a single file
         else:
-            files = [("file", (get_mutated_filepath(path_to_file, dest_folder_name, save_absolute_paths),
+            files = [("file", (get_mutated_filepath(path_to_file, dest_folder_name, save_absolute_paths, path_to_file),
                                open(path_to_file, "rb")))]  # type: ignore
 
         if options is not None:
