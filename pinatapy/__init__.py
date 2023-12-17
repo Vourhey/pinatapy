@@ -212,3 +212,36 @@ class PinataPy:
         url: str = API_ENDPOINT + "data/userPinnedDataTotal"
         response: requests.Response = requests.get(url=url, headers=self._auth_headers)
         return response.json() if response.ok else self._error(response)  # type: ignore
+
+    def generate_api_key(self, key_name: str, is_admin: bool, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
+        """Generates Pinata API key. Can only be called by using an "Admin" key.
+        If not an "admin" key is being created, the "permissions" option must be included.
+        Returns three values: The API Key, the API Secret, and a JWT Bearer Token.
+        More: https://docs.pinata.cloud/reference/post_users-generateapikey
+        """
+        url: str = API_ENDPOINT + "users/generateApiKey"
+        headers: Headers = self._auth_headers
+        headers["Content-Type"] = "application/json"
+        payload: ResponsePayload = {"keyName": key_name}
+        if is_admin:
+            payload["permissions"] = {"admin": True}
+        else:
+            if (options is None) or (not "permissions" in options):
+                raise Exception("Setting permissions is necessary! Check https://docs.pinata.cloud/reference/post_users-generateapikey")
+            else:
+                payload["permissions"] = options["permissions"]
+                if "maxUses" in options:
+                    payload["maxUses"] = options["maxUses"]
+        response: requests.Response = requests.post(url=url, json=payload, headers=headers)
+        return response.json() if response.ok else self._error(response)
+
+    def revoke_api_key(self, api_key: str) -> ResponsePayload:
+        """Revokes Pinata API key. Can only be called by using an "Admin" key.
+        ATTENTION: This method will returns "Revoked" even if there is no such key exists.
+        """
+        url: str = API_ENDPOINT + "users/revokeApiKey"
+        headers: Headers = self._auth_headers
+        headers["Content-Type"] = "application/json"
+        payload: ResponsePayload = {"apiKey": api_key}
+        response: requests.Response = requests.put(url=url, json=payload, headers=headers)
+        return self._error(response) if not response.ok else {"message": "Revoked"}

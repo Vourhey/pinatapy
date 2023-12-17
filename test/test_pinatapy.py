@@ -24,7 +24,22 @@ class TestPinataPy(unittest.TestCase):
     def test_user_pinned_data_total(self) -> None:
         res = self.pinata.user_pinned_data_total()
         self.assertIn("pin_count", res)
+    
+    def test_generate_admin_api_key(self) -> None:
+        res = self.pinata.generate_api_key(key_name="test_admin_key", is_admin=True)
+        self.assertIn("pinata_api_key", res)
 
+    def test_generate_api_key_exception(self) -> None:
+        with self.assertRaises(Exception) as exception_context:
+            self.pinata.generate_api_key(key_name="test_key", is_admin=False, options={"maxUses": 1})
+        self.assertEqual(
+            str(exception_context.exception),
+            "Setting permissions is necessary! Check https://docs.pinata.cloud/reference/post_users-generateapikey"
+        )
+    
+    def test_generate_api_key_with_permissions(self) -> None:
+        res = self.pinata.generate_api_key(key_name="test_key_with_permissions", is_admin=False, options={"permissions": {"endpoints": {"pinning": {"pinFileToIPFS": True, "unpin": True}}}})
+        self.assertIn("pinata_api_key", res)
 
 if __name__ == "__main__":
     unittest.main()
